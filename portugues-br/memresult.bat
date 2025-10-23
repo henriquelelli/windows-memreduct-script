@@ -24,29 +24,24 @@ echo.
 
 :: 1. ESPACO EM DISCO
 echo [1] ESPACO EM DISCO LIVRE:
-for /f "tokens=2,3" %%i in ('dir C:\ ^| find "bytes livres"') do (
-    set "FREE_SPACE=%%i %%j"
-    echo Disco C: %%i %%j livres
+for /f "tokens=3" %%i in ('dir C:\ ^| find "bytes livres"') do (
+    set "FREE_BYTES=%%i"
+    set "FREE_BYTES=!FREE_BYTES:.=!"
+    set /a FREE_GB=!FREE_BYTES!/1073741824
+    echo Disco C: !FREE_GB! GB livres
 )
 echo.
 
 :: 2. INFORMACOES DETALHADAS DO SISTEMA
 echo [2] INFORMACOES DO COMPUTADOR:
-for /f "tokens=*" %%i in ('systeminfo ^| findstr /B /C:"Nome do sistema operacional" /C:"Total de memória física" /C:"Sistema fabricado" /C:"Processador"') do (
+for /f "tokens=*" %%i in ('systeminfo ^| findstr /B /C:"Nome do sistema operacional" /C:"Processador"') do (
     echo %%i
 )
 echo.
 
 :: 3. MEMORIA RAM DETALHADA
 echo [3] MEMORIA RAM:
-for /f "tokens=1,2,3,4" %%a in ('systeminfo ^| findstr /C:"Memória física disponível" /C:"Memória física total"') do (
-    if "%%a"=="Memória" (
-        if "%%b"=="física" (
-            if "%%c"=="disponível:" echo Memoria Disponivel: %%d
-            if "%%c"=="total:" echo Memoria Total: %%d
-        )
-    )
-)
+systeminfo | findstr /C:"Memória física total" /C:"Memória física disponível"
 echo.
 
 :: 4. PROCESSOS ATIVOS
@@ -73,9 +68,7 @@ echo.
 
 :: 6. TEMPO DE ATIVIDADE
 echo [6] TEMPO DE ATIVIDADE DO SISTEMA:
-for /f "tokens=1,2,3,4" %%a in ('systeminfo ^| findstr /C:"Tempo inicialização do sistema"') do (
-    echo Tempo de atividade: %%b %%c %%d
-)
+systeminfo | findstr /C:"Tempo inicialização do sistema"
 echo.
 
 :: 7. INFORMACOES DA CPU
@@ -164,27 +157,39 @@ echo Coletando informacoes detalhadas para o relatorio...
 
 :: Coletar processador
 set "PROCESSOR="
-for /f "tokens=2 delims==" %%i in ('wmic cpu get name /value 2^>nul') do set "PROCESSOR=%%i"
+for /f "tokens=2 delims==" %%i in ('wmic cpu get name /value 2^>nul ^| findstr "Name"') do set "PROCESSOR=%%i"
 
-:: Coletar memoria total
+:: Coletar memoria total e disponivel (CORRIGIDO)
 set "MEM_TOTAL="
-for /f "tokens=4" %%i in ('systeminfo ^| findstr /C:"Memória física total:"') do set "MEM_TOTAL=%%i"
-
-:: Coletar memoria disponivel
 set "MEM_AVAIL="
-for /f "tokens=4" %%i in ('systeminfo ^| findstr /C:"Memória física disponível:"') do set "MEM_AVAIL=%%i"
 
-:: Coletar sistema operacional
+for /f "tokens=*" %%i in ('systeminfo ^| findstr /C:"Memória física total"') do (
+    for /f "tokens=4" %%j in ("%%i") do set "MEM_TOTAL=%%j"
+)
+
+for /f "tokens=*" %%i in ('systeminfo ^| findstr /C:"Memória física disponível"') do (
+    for /f "tokens=4" %%j in ("%%i") do set "MEM_AVAIL=%%j"
+)
+
+:: Coletar sistema operacional (CORRIGIDO)
 set "OS_NAME="
-for /f "tokens=2,3,4,5,6,7,8,9,10" %%i in ('systeminfo ^| findstr /B /C:"Nome do sistema operacional:"') do set "OS_NAME=%%i %%j %%k %%l %%m %%n %%o %%p %%q"
+for /f "tokens=4,5,6,7,8" %%i in ('systeminfo ^| findstr /B /C:"Nome do sistema operacional"') do (
+    set "OS_NAME=%%i %%j %%k %%l %%m"
+)
 
-:: Coletar fabricante
-set "MANUFACTURER="
-for /f "tokens=2,3,4" %%i in ('systeminfo ^| findstr /B /C:"Sistema fabricado por:"') do set "MANUFACTURER=%%i %%j %%k"
-
-:: Coletar tempo de atividade
+:: Coletar tempo de atividade (CORRIGIDO)
 set "UPTIME="
-for /f "tokens=2,3,4" %%i in ('systeminfo ^| findstr /C:"Tempo inicialização do sistema:"') do set "UPTIME=%%i %%j %%k"
+for /f "tokens=5,6,7,8" %%i in ('systeminfo ^| findstr /C:"Tempo inicialização do sistema"') do (
+    set "UPTIME=%%i %%j %%k %%l"
+)
+
+:: Coletar espaço em disco (CORRIGIDO)
+set "FREE_GB="
+for /f "tokens=3" %%i in ('dir C:\ ^| find "bytes livres"') do (
+    set "FREE_BYTES=%%i"
+    set "FREE_BYTES=!FREE_BYTES:.=!"
+    set /a FREE_GB=!FREE_BYTES!/1073741824
+)
 
 :: Criar relatorio completo
 echo Criando relatorio detalhado...
@@ -203,22 +208,13 @@ echo 🖥️  INFORMACOES DO SISTEMA
 echo ==================================================
 echo.
 echo 📋 SISTEMA OPERACIONAL: !OS_NAME!
-echo 🏭 FABRICANTE: !MANUFACTURER!
-echo.
 echo 🔧 PROCESSADOR: !PROCESSOR!
 echo.
 echo 🧠 MEMORIA RAM:
 echo    Total: !MEM_TOTAL!
 echo    Disponivel: !MEM_AVAIL!
 echo.
-echo 💾 ARMAZENAMENTO:
-) > "medicao_%TIMESTAMP%.txt"
-
-:: Adicionar espaço em disco
-dir C:\ | find "bytes livres" >> "medicao_%TIMESTAMP%.txt"
-
-:: Continuar com o relatorio
-(
+echo 💾 DISCO C: !FREE_GB! GB livres
 echo.
 echo ==================================================
 echo 📊 METRICAS DE PERFORMANCE
@@ -230,7 +226,7 @@ echo ==================================================
 echo 🌐 NAVEGADORES
 echo ==================================================
 echo.
-) >> "medicao_%TIMESTAMP%.txt"
+) > "medicao_%TIMESTAMP%.txt"
 
 :: Chrome
 if %CHROME_PROCESSES% GTR 0 (
@@ -275,7 +271,9 @@ echo.
 echo ✅ Sistema operacional: !OS_NAME!
 echo ✅ Processador: !PROCESSOR!
 echo ✅ Memoria RAM: !MEM_TOTAL! total, !MEM_AVAIL! disponivel
+echo ✅ Disco C: !FREE_GB! GB livres
 echo ✅ Processos ativos: %PROCESS_COUNT%
+echo ✅ Tempo de atividade: !UPTIME!
 echo.
 echo 📊 NAVEGADORES EM EXECUCAO:
 ) >> "medicao_%TIMESTAMP%.txt"
@@ -298,8 +296,6 @@ if %TOTAL_BROWSERS% EQU 0 (
 )
 
 (
-echo.
-echo ✅ Tempo de atividade: !UPTIME!
 echo.
 echo ==================================================
 echo 💾 ARQUIVO SALVO: medicao_%TIMESTAMP%.txt
