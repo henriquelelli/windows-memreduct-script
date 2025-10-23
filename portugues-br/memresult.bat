@@ -2,6 +2,9 @@
 title Medicao de Performance - Antes/Depois
 color 0B
 
+:: Habilitar expansao atrasada desde o inicio
+setlocal enabledelayedexpansion
+
 echo.
 echo ==================================================
 echo         MEDICAO DE PERFORMANCE DO SISTEMA
@@ -54,13 +57,14 @@ del "%temp%\process_count.txt" 2>nul
 echo Total de processos ativos: %PROCESS_COUNT%
 echo.
 
-:: 5. USO DO CHROME
+:: 5. USO DO CHROME (CORRIGIDO)
 echo [5] USO DO CHROME:
 tasklist /fi "IMAGENAME eq chrome.exe" 2>nul | findstr /i "chrome.exe" >nul
 if %errorlevel% == 0 (
     echo Chrome esta em execucao
-    for /f "tokens=5" %%i in ('tasklist /fi "IMAGENAME eq chrome.exe" /fo table /nh') do (
-        set /a CHROME_MEM_MB=%%i/1024
+    for /f "tokens=5" %%i in ('tasklist /fi "IMAGENAME eq chrome.exe" /fo table /nh 2^>nul') do (
+        set /a CHROME_MEM_KB=%%i
+        set /a CHROME_MEM_MB=!CHROME_MEM_KB!/1024
         echo Memoria do Chrome: !CHROME_MEM_MB! MB
     )
 ) else (
@@ -105,9 +109,6 @@ set "TIMESTAMP=%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%"
 set "TIMESTAMP=%TIMESTAMP: =0%"
 set "TIMESTAMP=%TIMESTAMP::=%"
 set "TIMESTAMP=%TIMESTAMP:/=%"
-
-:: Habilitar expansao atrasada para variaveis
-setlocal enabledelayedexpansion
 
 :: Coletar informacoes detalhadas para o arquivo
 echo Coletando informacoes detalhadas para o relatorio...
@@ -207,6 +208,9 @@ echo ✅ Processador: !PROCESSOR!
 echo ✅ Memoria RAM: !MEM_TOTAL! total, !MEM_AVAIL! disponivel
 echo ✅ Processos ativos: %PROCESS_COUNT%
 echo ✅ Chrome: !CHROME_STATUS!
+if "!CHROME_STATUS!"=="Chrome em execucao" (
+    echo ✅ Memoria Chrome: !CHROME_MEM! MB
+)
 echo ✅ Tempo de atividade: !UPTIME!
 echo.
 echo ==================================================
@@ -214,8 +218,6 @@ echo 💾 ARQUIVO SALVO: medicao_%TIMESTAMP%.txt
 echo 📁 LOCAL: %CD%
 echo ==================================================
 ) >> "medicao_%TIMESTAMP%.txt"
-
-endlocal
 
 echo.
 echo ✅ RELATORIO SALVO COM SUCESSO!
@@ -230,3 +232,5 @@ echo   3. Compare os dois relatorios
 echo.
 echo Pressione qualquer tecla para fechar...
 pause >nul
+
+endlocal
