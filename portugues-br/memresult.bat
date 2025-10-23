@@ -24,9 +24,8 @@ echo.
 
 :: 1. ESPACO EM DISCO
 echo [1] ESPACO EM DISCO LIVRE:
-for /f "tokens=3" %%i in ('dir C:\ ^| find "bytes livres"') do (
+for /f "skip=1 tokens=3" %%i in ('wmic logicaldisk where "DeviceID='C:'" get FreeSpace ^| findstr /r "[0-9]"') do (
     set "FREE_BYTES=%%i"
-    set "FREE_BYTES=!FREE_BYTES:.=!"
     set /a FREE_GB=!FREE_BYTES!/1073741824
     echo Disco C: !FREE_GB! GB livres
 )
@@ -41,7 +40,14 @@ echo.
 
 :: 3. MEMORIA RAM DETALHADA
 echo [3] MEMORIA RAM:
-systeminfo | findstr /C:"Memória física total" /C:"Memória física disponível"
+for /f "skip=1 tokens=1" %%i in ('wmic OS get TotalVisibleMemorySize ^| findstr /r "[0-9]"') do (
+    set /a MEM_TOTAL_MB=%%i/1024
+    echo Memoria Total: !MEM_TOTAL_MB! MB
+)
+for /f "skip=1 tokens=1" %%i in ('wmic OS get FreePhysicalMemory ^| findstr /r "[0-9]"') do (
+    set /a MEM_FREE_MB=%%i/1024
+    echo Memoria Disponivel: !MEM_FREE_MB! MB
+)
 echo.
 
 :: 4. PROCESSOS ATIVOS
@@ -159,16 +165,20 @@ echo Coletando informacoes detalhadas para o relatorio...
 set "PROCESSOR="
 for /f "tokens=2 delims==" %%i in ('wmic cpu get name /value 2^>nul ^| findstr "Name"') do set "PROCESSOR=%%i"
 
-:: Coletar memoria total e disponivel (CORRIGIDO)
+:: Coletar memoria total e disponivel (CORRIGIDO - USANDO WMIC)
 set "MEM_TOTAL="
 set "MEM_AVAIL="
 
-for /f "tokens=*" %%i in ('systeminfo ^| findstr /C:"Memória física total"') do (
-    for /f "tokens=4" %%j in ("%%i") do set "MEM_TOTAL=%%j"
+for /f "skip=1 tokens=1" %%i in ('wmic OS get TotalVisibleMemorySize ^| findstr /r "[0-9]"') do (
+    set /a MEM_TOTAL_KB=%%i
+    set /a MEM_TOTAL_MB=!MEM_TOTAL_KB!/1024
+    set "MEM_TOTAL=!MEM_TOTAL_MB! MB"
 )
 
-for /f "tokens=*" %%i in ('systeminfo ^| findstr /C:"Memória física disponível"') do (
-    for /f "tokens=4" %%j in ("%%i") do set "MEM_AVAIL=%%j"
+for /f "skip=1 tokens=1" %%i in ('wmic OS get FreePhysicalMemory ^| findstr /r "[0-9]"') do (
+    set /a MEM_FREE_KB=%%i
+    set /a MEM_FREE_MB=!MEM_FREE_KB!/1024
+    set "MEM_AVAIL=!MEM_FREE_MB! MB"
 )
 
 :: Coletar sistema operacional (CORRIGIDO)
@@ -183,11 +193,10 @@ for /f "tokens=5,6,7,8" %%i in ('systeminfo ^| findstr /C:"Tempo inicialização
     set "UPTIME=%%i %%j %%k %%l"
 )
 
-:: Coletar espaço em disco (CORRIGIDO)
+:: Coletar espaço em disco (CORRIGIDO - USANDO WMIC)
 set "FREE_GB="
-for /f "tokens=3" %%i in ('dir C:\ ^| find "bytes livres"') do (
+for /f "skip=1 tokens=3" %%i in ('wmic logicaldisk where "DeviceID='C:'" get FreeSpace ^| findstr /r "[0-9]"') do (
     set "FREE_BYTES=%%i"
-    set "FREE_BYTES=!FREE_BYTES:.=!"
     set /a FREE_GB=!FREE_BYTES!/1073741824
 )
 
