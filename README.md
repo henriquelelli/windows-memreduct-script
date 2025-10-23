@@ -1,6 +1,7 @@
 # windows-memreduct-script
 
 <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows"> <img src="https://img.shields.io/badge/Batch-4D4D4D?style=for-the-badge&logo=windows&logoColor=white" alt="Batch"> <img src="https://img.shields.io/badge/Open_Source-✓-green?style=for-the-badge" alt="Open Source"> <img src="https://img.shields.io/badge/Safe-✓-brightgreen?style=for-the-badge" alt="Safe">
+
 A safe and transparent Batch script alternative to Mem Reduct for Windows memory optimization and system cleanup.
 
 🌍 Multi-Language Support / Suporte Multi-idiomas
@@ -20,6 +21,7 @@ This project provides a safe, open-source alternative to Mem Reduct using Batch 
 ✅ System Preservation: Maintains logs and user data
 
 
+
 🚀 Current Status
 ✅ Working and Stable
 Safe Cleanup Script (memreduct.bat)
@@ -28,10 +30,12 @@ Safe Cleanup Script (memreduct.bat)
 -   Tested and verified
 -   Ready for production use
 
+
 🚧 In Development
 Performance Measurement Script - Currently being refined
 
 Results Comparison Script - Basic functionality available
+
 
 🛠️ Installation & Usage
 
@@ -52,6 +56,7 @@ cd windows-memreduct-script/portugues-br  # For Portuguese version
 memreduct.bat
 ```
 
+
 ⚠️ Important Notes
 - The cleanup script is fully functional and safe
 
@@ -60,6 +65,7 @@ memreduct.bat
 - Always run scripts as Administrator for complete functionality
 
 - No personal data is deleted during cleanup
+
 
 🔧 Technical Details
 The script performs:
@@ -74,6 +80,7 @@ The script performs:
 
 - Safe disk cleanup
 
+
 🤝 Contributing
 We welcome contributions! Please:
 
@@ -84,6 +91,7 @@ We welcome contributions! Please:
 3. Commit your changes
 
 4. Open a Pull Request
+
 
 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.
